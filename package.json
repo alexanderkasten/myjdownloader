@@ -1,0 +1,45 @@
+{
+  "name": "myjdownloader",
+  "version": "1.0.0",
+  "description": "A Node.js client for interacting with the MyJDownloader API",
+  "main": "dist/cjs/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    "require": "./dist/cjs/index.js",
+    "import": "./dist/index.js",
+    "types": "./dist/index.d.ts"
+  },
+  "scripts": {
+    "build": "tsc && npm run build:cjs",
+    "build:cjs": "tsc --module commonjs --outdir dist/cjs",
+    "watch": "tsc -w",
+    "prepublishOnly": "npm run build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alexanderkasten/myjdownloader.git"
+  },
+  "keywords": [
+    "myjdownloader",
+    "jdownloader"
+  ],
+  "author": "Alexander Kasten",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/alexanderkasten/myjdownloader/issues"
+  },
+  "homepage": "https://github.com/alexanderkasten/myjdownloader#readme",
+  "devDependencies": {
+    "@types/aes-js": "^3.1.4",
+    "@types/node": "^22.13.1",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "aes-js": "^3.1.2",
+    "pkcs7-padding": "^0.1.1"
+  }
+}
