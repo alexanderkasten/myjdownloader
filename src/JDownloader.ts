@@ -8,6 +8,31 @@ import { LinkgrabberV2 } from "./namespaces/LinkgrabberV2"
 import { Events } from "./namespaces/Events"
 import { DownloadEvents } from "./namespaces/DownloadEvents"
 
+/**
+ * A class that provides an interface to interact with JDownloader API.
+ * Handles authentication, encryption, and communication with JDownloader servers.
+ *
+ * @class JDownloader
+ *
+ *
+ * @property {Accounts} accounts - Interface for accounts-related operations
+ * @property {AccountsV2} accountsV2 - Interface for accounts-related operations (V2)
+ * @property {Captcha} captcha - Interface for captcha-related operations
+ * @property {DownloadsV2} downloadsV2 - Interface for download operations (V2)
+ * @property {LinkgrabberV2} linkgrabberV2 - Interface for link grabber operations (V2)
+ * @property {Events} events - Interface for event handling
+ * @property {DownloadEvents} downloadEvents - Interface for download event handling
+ *
+ * @constructor
+ * @param {string} email - The user's email address for authentication
+ * @param {string} password - The user's password for authentication
+ *
+ * @example
+ * ```typescript
+ * const jd = new JDownloader('user@example.com', 'password');
+ * await jd.connect();
+ * ```
+ */
 class JDownloader {
   private apiUrl = "https://api.jdownloader.org"
   private appKey = "my_jd_nodeJS_webinterface"
