@@ -1,1 +1,1 @@
-export * from './JDownloader';
+export { default } from './JDownloader';
