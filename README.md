@@ -55,3 +55,42 @@ async function main() {
 
 main();
 ```
+
+## Direct Connection
+
+If the deprecated direct connection API is enabled, you could connect without myJD to your JDownloader.
+
+```typescript
+import JDownloader from 'myjdownloader';
+
+async function main() {
+  // Initialize the client with your MyJDownloader credentials
+  const client = new JDownloader(null, null, 'http://localhost:3128');
+
+  try {
+    // Connect to the API
+    await client.connect();
+
+    // List all available devices
+    const devices = await client.listDevices();
+    console.log('Available devices:', devices);
+    const deviceId = devices[0];
+    // Get downloads list
+    const downloads = await client.downloadsV2.queryLinks(deviceId);
+    console.log('Current downloads:', downloads);
+
+    // Add new download
+    await client.linkgrabberV2.addLinks(deviceId, {
+      links: 'http://example.com/file.zip',
+      autostart: true
+    });
+
+    // Disconnect when done
+    await client.disconnect();
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+main();
+```

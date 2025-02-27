@@ -34,7 +34,6 @@ import { DownloadEvents } from "./namespaces/DownloadEvents"
  * ```
  */
 class JDownloader {
-  private apiUrl = "https://api.jdownloader.org"
   private appKey = "my_jd_nodeJS_webinterface"
   private serverDomain = "server"
   private deviceDomain = "device"
@@ -46,6 +45,7 @@ class JDownloader {
   private sessionToken: string | null = null
   private regainToken: string | null = null
   private ridCounter = 0
+  private connectionType: "my" | "api" = "my" // my or api
 
   // Namespace members
   public accounts: Accounts
@@ -57,10 +57,15 @@ class JDownloader {
   public downloadEvents: DownloadEvents
 
   constructor(
-    private email: string,
-    private password: string,
+    private email?: string,
+    private password?: string,
+    private apiUrl = "https://api.jdownloader.org"
   ) {
-    this.email = email.toLowerCase()
+    this.email = email?.toLowerCase()
+    if (!this.email || !this.password) {
+      console.log("No email or password provided. Using direct api mode.");
+      this.connectionType = "api";
+    }
     // Initialize namespace members with the bound makeRequest method
     this.accounts = new Accounts(this.callAction.bind(this))
     this.accountsV2 = new AccountsV2(this.callAction.bind(this))
@@ -119,11 +124,11 @@ class JDownloader {
   }
 
   private async callAction(action: string, deviceId: string, params: any = null): Promise<any> {
-    if (!this.sessionToken || !this.deviceEncryptionToken) {
+    if (this.connectionType === 'my' && (!this.sessionToken || !this.deviceEncryptionToken) ) {
       throw new Error("Not connected")
     }
 
-    const query = `/t_${encodeURIComponent(this.sessionToken)}_${encodeURIComponent(deviceId)}${action}`
+    const query = this.connectionType === 'api' ? action : `/t_${encodeURIComponent(this.sessionToken ?? '')}_${encodeURIComponent(deviceId)}${action}`
 
     const json = {
       url: action,
@@ -132,24 +137,30 @@ class JDownloader {
       apiVer: 1,
     }
 
-    const encrypted = encrypt(JSON.stringify(json), this.deviceEncryptionToken)
+    const encrypted = this.connectionType === 'api' ? params[0] : encrypt(JSON.stringify(json), this.deviceEncryptionToken ?? Buffer.from(' '))
 
     const response = await fetch(this.apiUrl + query, {
       method: "POST",
       headers: {
-        "Content-Type": "application/aesjson-jd; charset=utf-8",
+        "Content-Type": this.connectionType === 'api' ? "application/json; charset=utf-8" : "application/aesjson-jd; charset=utf-8",
       },
       body: encrypted,
     })
 
     if (!response.ok) {
       const error = await response.text()
-      throw new Error(decrypt(error, this.deviceEncryptionToken))
+      if (this.connectionType === 'api') {
+        throw new Error(error)
+      }
+      throw new Error(decrypt(error, this.deviceEncryptionToken?? Buffer.from('sfdsfdsfdsfdsf')))
     }
 
+    if (this.connectionType === 'api') {
+      return response.json()
+    }
     const data = await response.text()
     try {
-      const decrypted = decrypt(data, this.deviceEncryptionToken)
+      const decrypted = decrypt(data, this.deviceEncryptionToken?? Buffer.from('sfdsfdsfdsfdsf'))
       return JSON.parse(decrypted.replace(/[^\x20-\x7E]/g, ""))
     } catch (error) {
       console.error("Decryption error:", error)
@@ -158,6 +169,12 @@ class JDownloader {
   }
 
   async connect(): Promise<string> {
+    if (!this.email || !this.password) {
+      const response = await fetch(this.apiUrl + "/jdcheckjson");
+      const data = await response.json();
+      console.log(`Connected to JDownloader API with ${data.name} and ID ${data.deviceId}`);
+      return data.deviceId;
+    }
     this.loginSecret = createSecret(this.email, this.password, this.serverDomain)
     this.deviceSecret = createSecret(this.email, this.password, this.deviceDomain)
 
@@ -182,6 +199,10 @@ class JDownloader {
   }
 
   async disconnect(): Promise<void> {
+    if (this.connectionType === "api") {
+      console.log("Disconnected successfully")
+      return;
+    }
     if (!this.sessionToken || !this.serverEncryptionToken) {
       throw new Error("Not connected")
     }
@@ -211,6 +232,13 @@ class JDownloader {
   }
 
   async listDevices(): Promise<any> {
+    if (this.connectionType === "api") {
+      const response = await fetch(this.apiUrl + "/jdcheckjson");
+      const data = await response.json();
+      return {
+        list: [{...data, id: data.deviceId}]
+      }
+    }
     if (!this.sessionToken || !this.serverEncryptionToken) {
       throw new Error("Not connected")
     }
